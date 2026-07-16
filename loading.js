@@ -7,7 +7,17 @@ function getRawGifUrl() {
 }
 
 function normalizeTenorUrl(rawUrl) {
-  const url = new URL(rawUrl);
+  const raw = rawUrl.trim();
+  const postId =
+    raw.match(/data-postid=["']?(\d{3,})["']?/i)?.[1] ||
+    raw.match(/tenor\.com\/(?:ja\/)?view\/[^"'\s<>]*?(\d{3,})(?:[/"'\s<>]|$)/i)?.[1] ||
+    raw.match(/tenor\.com\/embed\/(\d{3,})(?:[/"'\s<>]|$)/i)?.[1];
+
+  if (postId) {
+    return { type: "frame", url: `https://tenor.com/embed/${postId}` };
+  }
+
+  const url = new URL(raw);
   const host = url.hostname.toLowerCase();
 
   if (url.protocol !== "https:") {

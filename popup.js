@@ -16,19 +16,51 @@ function splitLines(value) {
     .filter(Boolean);
 }
 
-function isAllowedTenorUrl(rawUrl) {
-  try {
-    const url = new URL(rawUrl);
-    const host = url.hostname.toLowerCase();
-    return (
-      url.protocol === "https:" &&
-      (host === "tenor.com" ||
-        host.endsWith(".tenor.com") ||
-        host === "media.tenor.com")
-    );
-  } catch {
-    return false;
+function normalizeTenorEmbed(rawEntry) {
+  const entry = rawEntry.trim();
+  const postId =
+    entry.match(/data-postid=["']?(\d{3,})["']?/i)?.[1] ||
+    entry.match(/tenor\.com\/(?:ja\/)?view\/[^"'\s<>]*?(\d{3,})(?:[/"'\s<>]|$)/i)?.[1] ||
+    entry.match(/tenor\.com\/embed\/(\d{3,})(?:[/"'\s<>]|$)/i)?.[1];
+
+  if (postId) {
+    return `https://tenor.com/embed/${postId}`;
   }
+
+  try {
+    const url = new URL(entry);
+    const host = url.hostname.toLowerCase();
+
+    if (
+      url.protocol === "https:" &&
+      (host === "tenor.com" || host.endsWith(".tenor.com"))
+    ) {
+      return url.href;
+    }
+
+    if (url.protocol === "https:" && host === "media.tenor.com") {
+      return url.href;
+    }
+  } catch {
+    // Fall through to the validation error below.
+  }
+
+  throw new Error(`Tenor埋め込みHTMLからdata-postidを読み取れません: ${entry}`);
+}
+
+function normalizeEntries(value) {
+  const seen = new Set();
+  const entries = splitLines(value)
+    .map(normalizeTenorEmbed)
+    .filter((entry) => {
+      if (seen.has(entry)) {
+        return false;
+      }
+      seen.add(entry);
+      return true;
+    });
+
+  return entries;
 }
 
 function setStatus(message, isError = false) {
@@ -47,11 +79,11 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-  const urls = splitLines(textarea.value);
-  const invalidUrls = urls.filter((url) => !isAllowedTenorUrl(url));
-
-  if (invalidUrls.length > 0) {
-    setStatus(`Tenorのhttps URLだけ保存できます: ${invalidUrls[0]}`, true);
+  let urls;
+  try {
+    urls = normalizeEntries(textarea.value);
+  } catch (error) {
+    setStatus(error.message, true);
     return;
   }
 
