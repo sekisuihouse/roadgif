@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Road GIF Loader icon">
+  <rect width="128" height="128" rx="28" fill="#0f172a"/>
+  <path d="M46 120 C74 88 54 62 78 36 C88 25 93 17 96 8" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round"/>
+  <path d="M48 120 C76 88 56 63 80 37 C88 28 92 20 95 10" fill="none" stroke="#38bdf8" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="34" cy="31" r="10" fill="#f472b6"/>
+  <circle cx="52" cy="21" r="6" fill="#facc15"/>
+  <circle cx="25" cy="51" r="5" fill="#22c55e"/>
+</svg>
