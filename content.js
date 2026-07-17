@@ -57,11 +57,17 @@
   }
 
   function removeOverlay(overlay) {
-    if (!overlay || !overlay.isConnected) {
+    if (!overlay) {
       return;
     }
 
-    overlay.remove();
+    try {
+      overlay.remove();
+    } catch (error) {
+      if (error?.name !== "NotFoundError") {
+        throw error;
+      }
+    }
   }
 
   chrome.storage.sync.get(STORAGE_DEFAULTS, (settings) => {
@@ -82,13 +88,28 @@
       return;
     }
 
-    const remove = () => removeOverlay(overlay);
+    let removed = false;
+    let timeoutId = null;
+    const remove = () => {
+      if (removed) {
+        return;
+      }
+
+      removed = true;
+      window.removeEventListener("load", remove);
+
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+
+      removeOverlay(overlay);
+    };
 
     if (document.readyState === "complete") {
       remove();
     } else {
       window.addEventListener("load", remove, { once: true });
-      window.setTimeout(remove, MAX_VISIBLE_MS);
+      timeoutId = window.setTimeout(remove, MAX_VISIBLE_MS);
     }
   });
 })();
